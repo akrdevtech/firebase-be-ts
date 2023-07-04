@@ -1,34 +1,30 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {NextFunction, Request, Response} from "express";
 
-const generatePropertyKeyIfArray = () => {
-  return (key:unknown) => {
-    return `${key}_${Math.random() * 100000}`;
-  };
+
+const generatePropertyKeyIfArray = (key: unknown) => `${key}_${Math.random() * 100000}`;
+
+const flattenObject = (obj: Record<string, unknown>): Record<string, unknown>[] => {
+  return Object.keys(obj).flatMap((key) => {
+    if (obj[key] && typeof obj[key] === "object") {
+      return flattenObject(obj[key] as Record<string, unknown>);
+    }
+    return {[generatePropertyKeyIfArray(key)]: obj[key] || ""};
+  }) as Record<string, unknown>[];
 };
 
-const flattern = (data: unknown) => {
-  return Object.assign(
-    {},
-    ...((function _flatten(o) {
-      return [].concat(
-        ...Object.keys(o).map((k) => {
-          return o[k] && typeof o[k] === "object" ?
-            _flatten(o[k]) :
-            {[generatePropertyKeyIfArray()(k)]: o[k] ? o[k] : ""};
-        })
-      );
-    })(data) || {})
-  );
+const flatten = (data: Record<string, unknown>): Record<string, unknown> => {
+  const flattenedArray = flattenObject(data);
+  return Object.assign({}, ...flattenedArray);
 };
 
 
 const havingBadData = (data: unknown) => {
-  const flatData = flattern(data);
+  const flatData = flatten(data as Record<string, unknown>);
   const keys = Object.keys(flatData);
-  const errors:unknown[] = [];
+  const errors: unknown[] = [];
   keys.forEach((key) => {
-    if (typeof flatData[key] === "string" && flatData[key].match(/\[[^\]]+\]|\{[^}]+\}|<[^>]+>/)) {
+    if (typeof flatData[key] === "string" && (flatData[key] as string).match(/\[[^\]]+\]|\{[^}]+\}|<[^>]+>/)) {
       errors.push({
         msg: `Invalid data ${flatData[key]}`,
         param: key.split("_")[0],
@@ -42,7 +38,7 @@ const havingBadData = (data: unknown) => {
   };
 };
 
-export const requestValidationMiddleware = () => (req: Request, res: Response, next: NextFunction) => {
+export const requestValidationMiddleware = () => (req: Request, res: Response, next: NextFunction): unknown => {
   const {hasError, errors} = havingBadData(Object.assign({}, req.body || {}, req.params || {}, req.query || {}));
   if (hasError) {
     return res.status(400).json({
@@ -52,5 +48,5 @@ export const requestValidationMiddleware = () => (req: Request, res: Response, n
       transactionId: req.txId,
     });
   }
-  next();
+  return next();
 };

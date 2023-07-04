@@ -1,0 +1,34 @@
+{
+  "Environment": {
+    "name": "local",
+    "port": 8000,
+    "accessAllowedFrom": [
+      "*"
+    ],
+    "apiBaseUrl": "/study_centre/api/v1",
+    "serviceName": "study-centre-service",
+    "openEndpoints": [
+      "/healthcheck",
+      "/public",
+      "/webhooks"
+    ],
+    "lockedEndpoints": [
+      ""
+    ],
+    "internalApiKey": "b4567rt45",
+    "auditLogExcludedPaths": []
+  },
+  "Services": {
+    "mongo": {
+      "uri": "mongodb://127.0.0.1:27017/studycentre?retryWrites=true",
+      "dbName": "study-centre",
+      "ssl": false,
+      "logLevel": "info"
+    }
+  },
+  "ErrorAlert": {
+    "recipients": [],
+    "source": "Error-Alert <DoNotReply@rptc.in>"
+  },
+  "Application": {}
+}
